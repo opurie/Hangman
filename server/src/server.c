@@ -24,7 +24,14 @@ void handle_error(int exitCode){
         exit(1);
     }
 }
-
+void replaceDelimiter(char *txt){
+    char rep = '\t';
+    char orig = '\n';
+    char *ix = txt;
+    while((ix = strchr(ix, orig)) != NULL) {
+        *ix++ = rep;
+    }
+}
 void writeToClient(int clientSocket, const char *message){
     handle_error(write(clientSocket, message, strlen(message)));
 }
@@ -113,7 +120,6 @@ int createRoom(struct ROOMS *rooms, struct USERS * users, char *roomName, char *
             return 1;
         }
     }
-
     struct ROOM * room = malloc(sizeof(struct ROOM));
     rooms->rooms = realloc(rooms->rooms, (rooms->roomsCount+1)*sizeof(struct ROOM));
     int len = sizeof(&secretWord)/sizeof(secretWord[0]);
@@ -130,6 +136,9 @@ int createRoom(struct ROOMS *rooms, struct USERS * users, char *roomName, char *
     pthread_mutex_init(&(room->mutex),NULL);
 
     rooms->rooms[rooms->roomsCount] = *room;
+    rooms->roomsCount++;
+    player->inRoom = 1;
+    printf("Created room: %s pin: %d count: %d\n", room->name, room->pin, rooms->roomsCount);
     pthread_mutex_unlock(&(rooms->mutex));
     return 0;
 }
@@ -142,7 +151,7 @@ void initRooms(struct ROOMS *rooms){
 int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName, int pin){
     pthread_mutex_lock(&(rooms->mutex));
     pthread_mutex_lock(&(users->mutex));
-
+    struct USER *user =malloc(sizeof(struct USER));
     //check if player already is in room
     for(int i=0; i < users->registeredUsersCount; i++){
         if(strcmp(users->players[i].nick, nick) == 0 && users->players[i].inRoom > 0){
@@ -153,6 +162,7 @@ int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomNa
         else if(strcmp(users->players[i].nick, nick) == 0 && users->players[i].inRoom == 0){
             users->players[i].mistakes = 0;
             users->players[i].points = 0;
+            user = &users->players[i];
             break;
         }
     }
@@ -182,7 +192,10 @@ int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomNa
                 rooms->rooms[i].mistakes = 5;
             break;
         }
+        if(i == rooms->roomsCount-1)
+            return 3;
     }
+    user->inRoom=2;
     pthread_mutex_unlock(&(users->mutex));
     pthread_mutex_unlock(&(rooms->mutex));
     return 0;

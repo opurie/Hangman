@@ -8,6 +8,9 @@
 #define LOGIN_SUCCESSFULL "Logged in\n"
 #define LOGIN_CHANGE_NAME "Login failed, change name\n"
 #define LOGIN_USER_LIMITS "Login failed, users limits\n"
+#define LOGOUT_SUCCESSFULL "Logout successfull\n"
+#define PLAYER_IN_GAME "Player in game\n"
+#define LOGOUT_FAILED "Logout failed\n"
 
 #define CREATE_OR_JOIN_ROOM "Create or join room\n"
 #define GET_ROOM_NAME "Get room name\n"
@@ -30,7 +33,7 @@
 #define WINNER_INFO "The winner is\n"
 #define WHO_GOT_POINT "Point to\n"
 #define ROOMS_LIST "Rooms list\n"
-#define USERS_LIST "Users lists\n"
+#define USERS_LIST "Users list\n"
 #define PLAYERS_IN_ROOM "Players in room\n"
 
 
@@ -43,6 +46,9 @@
 #define JOIN_ROOM "Join room\n"
 #define LEAVE_ROOM "Leave room\n"
 #define DELETE_ROOM "Delete room\n"
+
+#define GET_ROOM_LIST "Get room list\n"
+#define GET_PLAYER_LIST "Get player list\n"
 
 #define PICK_LETTER "Pick letter\n" // pick letter A-Z
 

@@ -43,7 +43,9 @@ struct THREAD_DATA{
 
 
 void handle_error(int exitCode);
+void replaceDelimiter(char *txt);
 void writeToClient(int clientSocket, const char *message);
+
 //Add new user. 0 - no problems, 1 - change name, 2 - limit of users is reached
 int login(struct USERS * users, char * nick);
 //delete user. 0 - no problems, 1 - user in game, 2 - xd

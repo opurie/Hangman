@@ -269,7 +269,7 @@ public class Lobby extends javax.swing.JFrame {
         jLabel4.setText("<- Set PIN");
 
         jTextField1.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        jTextField1.setText("Room name");
+        jTextField1.setText("room1");
         jTextField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField1ActionPerformed(evt);
@@ -277,7 +277,7 @@ public class Lobby extends javax.swing.JFrame {
         });
 
         jTextField2.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        jTextField2.setText("2137");
+        jTextField2.setText("1111");
         jTextField2.setToolTipText("1000-9999 number");
 
         jButton2.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
@@ -292,7 +292,7 @@ public class Lobby extends javax.swing.JFrame {
         jLabel7.setText("PIN: ");
 
         jTextField4.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
-        jTextField4.setText("2137");
+        jTextField4.setText("1111");
         jTextField4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField4ActionPerformed(evt);

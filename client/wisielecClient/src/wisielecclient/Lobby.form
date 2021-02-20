@@ -210,7 +210,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Ubuntu" size="18" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="Room name"/>
+        <Property name="text" type="java.lang.String" value="room1"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jTextField1ActionPerformed"/>
@@ -221,7 +221,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Ubuntu" size="18" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="2137"/>
+        <Property name="text" type="java.lang.String" value="1111"/>
         <Property name="toolTipText" type="java.lang.String" value="1000-9999 number"/>
       </Properties>
     </Component>
@@ -249,7 +249,7 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Ubuntu" size="18" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="2137"/>
+        <Property name="text" type="java.lang.String" value="1111"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jTextField4ActionPerformed"/>

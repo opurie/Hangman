@@ -1,4 +1,5 @@
 #include "main.h"
+#include <sys/epoll.h>
 
 void *worker(void *input)
 {
@@ -11,7 +12,7 @@ void *worker(void *input)
     bool running = true;
     if(!loginToServer(connectionSocketDescriptor, thread_data->users, nick))
         return NULL;
-
+        
     while(running){
         memset(request, 0, REQUEST_MAX_LEN);
         handle_error(read(connectionSocketDescriptor, request, REQUEST_MAX_LEN));
@@ -19,9 +20,9 @@ void *worker(void *input)
         if(strcmp(request, GET_ROOM_LIST) == 0){
             sendRoomsList(connectionSocketDescriptor, thread_data->rooms);
         }else if(strcmp(request, NEW_ROOM_REQUEST) == 0){
-            lobbyCreateRoom(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick);
+            lobbyCreateRoom(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick, roomName);
         }else if(strcmp(request, JOIN_ROOM) == 0){
-            lobbyJoinRoom(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick);
+            lobbyJoinRoom(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick, roomName);
         }else if(strcmp(request, LOGOUT) == 0){
             if(leaveServer(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick));
                 return NULL;
@@ -29,6 +30,10 @@ void *worker(void *input)
             sendPlayersList(connectionSocketDescriptor, thread_data->rooms, roomName);
         }else if(strcmp(request, START_GAME) == 0){
 
+        }else if(strcmp(request, LEAVE_ROOM)==0){
+            leaveRoomServer(connectionSocketDescriptor, thread_data->users, thread_data->rooms, nick, roomName);
+        }else if(strcmp(request, DELETE_ROOM)==0){
+            deleteRoomServer(connectionSocketDescriptor, thread_data->users, thread_data->rooms,nick, roomName);
         }
     }
     return NULL;
@@ -74,7 +79,6 @@ bool leaveServer(int connfd, struct USERS* users, struct ROOMS *rooms, char *nic
     handle_error(read(connfd, nick2, MAX_NICK_LENGTH));
     if(strcmp(nick2, nick)==0){
         serverStatus = logout(users, nick);
-        printf("%d", serverStatus);
         switch (serverStatus)
         {
         case 0:
@@ -91,14 +95,12 @@ bool leaveServer(int connfd, struct USERS* users, struct ROOMS *rooms, char *nic
     return false;
 }
 
-bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick){
+bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName){
     bool status = false;
     char secredWord[MAX_SECRET_WORD]={0};
     char pin[PIN]={0};
     int serverStatus = 0;
-    char request[REQUEST_MAX_LEN];
-
-    char roomName[MAX_ROOM_NAME]={0}; 
+    char request[REQUEST_MAX_LEN]; 
 
         memset(request, 0, REQUEST_MAX_LEN);
         writeToClient(connfd, GET_ROOM_NAME);
@@ -108,12 +110,11 @@ bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char 
         writeToClient(connfd, GET_SECRED_WORD);
         memset(secredWord, 0, MAX_SECRET_WORD);
         handle_error(read(connfd, secredWord, MAX_SECRET_WORD));
-
         writeToClient(connfd, GET_PIN);
         memset(pin, 0, PIN);
         handle_error(read(connfd, pin, PIN));
 
-        serverStatus = createRoom(rooms, users, roomName, nick, secredWord, atoi(pin));
+        serverStatus = createRoom(connfd, rooms, users, roomName, nick, secredWord, atoi(pin));
         switch (serverStatus)
         {
         case 0:
@@ -134,12 +135,11 @@ bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char 
     return false;
 }
 
-bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick){
+bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *joinRoomName){
     bool statlogous = false;
     char pin[PIN]={0};
     int serverStatus = 0;
     char request[REQUEST_MAX_LEN];
-    char joinRoomName[MAX_ROOM_NAME]={0};
 
     memset(request, 0, REQUEST_MAX_LEN);
     writeToClient(connfd, GET_ROOM_NAME);
@@ -150,7 +150,7 @@ bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *n
     memset(pin, 0, PIN);
     handle_error(read(connfd, pin, PIN));
 
-    serverStatus = joinRoom(rooms, users, nick, joinRoomName, atoi(pin));
+    serverStatus = joinRoom(connfd, rooms, users, nick, joinRoomName, atoi(pin));
     switch (serverStatus)
         {
         case 0:
@@ -168,6 +168,43 @@ bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *n
         }
 }
 
+bool startGame(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName){
+    struct ROOM *room;
+    for(int i = 0; i< rooms->roomsCount;i++){
+        if(strcmp(rooms->rooms[i].name, roomName) == 0 && rooms->rooms[i].playersIn >= MAX_PLAYERS && !rooms->rooms[i].STARTED){
+           room = &rooms->rooms[i];
+           for(int j = 0; j < room->playersIn; j++){
+                writeToClient(room->playersFD[j], GAME_STARTING);
+            }
+
+        }
+    }
+}
+
+bool leaveRoomServer(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName){
+    bool serverStatus = false;
+
+    serverStatus = leaveRoom(rooms, users, nick, roomName);
+    if(serverStatus){
+        writeToClient(connfd, ROOM_LEAVED);
+        memset(roomName, 0, MAX_ROOM_NAME);
+    }else{
+        writeToClient(connfd, ROOM_NOT_LEAVED);
+    }
+    return serverStatus;
+}
+
+bool deleteRoomServer(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName){
+    bool serverStatus =false;
+    serverStatus = deleteRoom(rooms, users, nick, roomName);
+    if(serverStatus){
+        writeToClient(connfd, ROOM_LEAVED);
+        memset(roomName, 0, MAX_ROOM_NAME);
+    }else{
+        writeToClient(connfd, ROOM_NOT_LEAVED);
+    }
+    serverStatus = deleteRoom(rooms,users,nick,roomName);
+}
 void sendRoomsList(int connfd, struct ROOMS *rooms){
     char request[REQUEST_MAX_LEN]={0};
     char count[5]={0};
@@ -190,11 +227,22 @@ void sendRoomsList(int connfd, struct ROOMS *rooms){
 
 void sendPlayersList(int connfd, struct ROOMS *rooms, char *roomName){
     char request[REQUEST_MAX_LEN]={0};
-    char count[2]={0};
-    handle_error(read(connfd, request, REQUEST_MAX_LEN));
-    if(strcmp(request, GET_PLAYER_LIST) == 0)
+    char count[5]={0};
+    char mistakes[2]={0};
+    char *secredWord;
+
         for(int i = 0; i < rooms->roomsCount; i++){
             if(strcmp(rooms->rooms[i].name, roomName) == 0){
+                writeToClient(connfd, rooms->rooms[i].creator);
+
+                sprintf(mistakes, "%d", rooms->rooms[i].mistakes);
+                writeToClient(connfd, mistakes);
+                writeToClient(connfd, "\n");
+
+                secredWord = returnSecretWord(rooms->rooms[i].secretWord," ");
+                writeToClient(connfd,secredWord);
+                writeToClient(connfd, "\n");
+             
                 sprintf(count, "%d", rooms->rooms[i].playersIn);
                 writeToClient(connfd, count);
                 writeToClient(connfd, "\n");
@@ -205,6 +253,7 @@ void sendPlayersList(int connfd, struct ROOMS *rooms, char *roomName){
                     writeToClient(connfd, name);
                     writeToClient(connfd, "\t");
                 }
+                writeToClient(connfd, "\n");
                 return;
             }    
         }
@@ -213,7 +262,6 @@ void sendPlayersList(int connfd, struct ROOMS *rooms, char *roomName){
 void newUser(int connfd, struct USERS *users, struct ROOMS *rooms)
 {
     pthread_t thread;
-    printf("Nowy %d\n", connfd);
     struct THREAD_DATA *thread_data = malloc(sizeof(struct THREAD_DATA));
     thread_data->fd = connfd;
     thread_data->rooms = rooms;
@@ -223,14 +271,17 @@ void newUser(int connfd, struct USERS *users, struct ROOMS *rooms)
 
 int main(int argc, char *argv[])
 {
-    int sockfd, connfd, len, on = 1;
+    int connfd, len, on = 1;
+
+    int sockfd;
+
     struct sockaddr_in servaddr;
     struct USERS *users = malloc(sizeof(struct USERS));
     struct ROOMS *rooms = malloc(sizeof(struct ROOMS));
     initRooms(rooms);
     initUsers(users);
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM , 0);
     if (sockfd == -1)
     {
         printf("socket creation failed...\n");
@@ -239,7 +290,7 @@ int main(int argc, char *argv[])
 
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
+    servaddr.sin_addr.s_addr =  htonl(INADDR_ANY);
     servaddr.sin_port = htons(SERVER_PORT);
 
     // bind to socket
@@ -254,10 +305,44 @@ int main(int argc, char *argv[])
         printf("Listening failed...\n");
         exit(0);
     }
-
     printf("Starting server at %s:%d\n", SERVER_ADDR, SERVER_PORT);
+    /*int epoll;
+    struct epoll_event ev, events[MAXFDS];
+    epoll = epoll_create1(0);
+    if (epoll == -1) {
+            perror("epoll_create1");
+           exit(EXIT_FAILURE);
+   }
+    
+    
+    ev.events = EPOLLIN;
+    ev.data.fd = sockfd;
+    int nfds;
     while (1)
     {
+        nfds = epoll_wait(epoll, events, MAXFDS, -1);
+        if(nfds == -1){
+            perror("epoll_wait");
+            exit(EXIT_FAILURE);
+        }
+        for(int i = 0; i < nfds; ++i){
+            if(events[i].data.fd = sockfd){
+                connfd = accept(sockfd, NULL, NULL);
+                if (connfd == -1) {
+                    perror("accept");
+                    exit(EXIT_FAILURE);
+                }
+                ev.events = EPOLLIN | EPOLLET;
+                ev.data.fd = connfd;
+                if(epoll_ctl(epoll, EPOLL_CTL_ADD, connfd, &ev) == -1){
+                    perror("epoll_ctl: conn_sock");
+                    exit(EXIT_FAILURE);
+                }
+                newUser(connfd, users, rooms);
+            }
+        }
+    }*/
+    while(1){
         connfd = accept(sockfd, NULL, NULL);
         handle_error(connfd);
         newUser(connfd, users, rooms);

@@ -25,10 +25,13 @@
 #define WRONG_PIN "Wrong pin\n"
 #define ROOM_IS_FULL "Room is full\n"
 #define ROOM_NOT_EXISTS "Room not exists\n"
+#define ROOM_LEAVED "Room leaved\n"
+#define ROOM_NOT_LEAVED "Room not leaved\n"
 
 #define USER_NOT_FOUND "User not found\n"
 #define ROOM_NOT_FOUND "Room not found\n"
 
+#define GAME_STARTING "Game starting\n"
 #define TIMER "Timer\n"
 #define WINNER_INFO "The winner is\n"
 #define WHO_GOT_POINT "Point to\n"

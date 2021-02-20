@@ -22,11 +22,14 @@ struct ROOM{
     int playersIn;//max 4
     int pin;// 4 digits number
     int mistakes; // 10 - 2 players, 7 - 3 players, 5 - 4 players
+    int playersFD[MAX_PLAYERS];
     char players[MAX_PLAYERS][MAX_NICK_LENGTH];
+    int creatorFD;
     char creator[MAX_NICK_LENGTH];
     char name[MAX_ROOM_NAME];
-    char *secretWord;//juicy word to guess
+    char secretWord[MAX_SECRET_WORD];
     char *InsertedLetters;
+    bool STARTED;
     pthread_mutex_t mutex;
 };
 struct ROOMS{
@@ -52,12 +55,12 @@ int login(struct USERS * users, char * nick);
 int logout(struct USERS *users, char *nick);
 
 void initUsers(struct USERS *users);
-//0-no problems, 1 - change name, 2-limit of rooms, 3 - unexpected!!!!!
-int createRoom(struct ROOMS *rooms,struct USERS * users, char *roomName, char *nick, char *secretWord, int pin);
+//0-no problems, 1 - change name, 2-limit of rooms, 3 - troubles
+int createRoom(int fd, struct ROOMS *rooms,struct USERS * users, char *roomName, char *nick, char *secretWord, int pin);
 
 void initRooms(struct ROOMS *rooms);
-//0 - no problems, 1 - room limit is reached, 2 - wrong pin, 3 - o kurwa xD
-int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName, int pin);
+//0 - no problems, 1 - room limit is reached, 2 - wrong pin, 3 - troubles
+int joinRoom(int fd, struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName, int pin);
 //leave room or kick player 
 bool leaveRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName);
 //delete room, nick - creator's nick
@@ -79,7 +82,5 @@ returns "_A_A_A-__-___D"
 char *returnSecretWord(char *SecretWord, char *InsertedLetters);
 
 int stringToInt(char *pin);
-
-void game();
 
 #endif

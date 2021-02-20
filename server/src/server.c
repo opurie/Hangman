@@ -89,7 +89,7 @@ void initUsers(struct USERS *users){
     users->registeredUsersCount=0;
 }
 
-int createRoom(struct ROOMS *rooms, struct USERS * users, char *roomName, char *nick, char *secretWord, int pin){
+int createRoom(int fd, struct ROOMS *rooms, struct USERS * users, char *roomName, char *nick, char *secretWord, int pin){
     pthread_mutex_lock(&(rooms->mutex));
     struct USER *player = NULL;
 
@@ -122,17 +122,15 @@ int createRoom(struct ROOMS *rooms, struct USERS * users, char *roomName, char *
     }
     struct ROOM * room = malloc(sizeof(struct ROOM));
     rooms->rooms = realloc(rooms->rooms, (rooms->roomsCount+1)*sizeof(struct ROOM));
-    int len = sizeof(&secretWord)/sizeof(secretWord[0]);
-    if(len > MAX_SECRET_WORD)
-        len = MAX_SECRET_WORD;
-    room->secretWord = malloc(sizeof(char)*len);
     room->InsertedLetters = malloc(sizeof(char)*0);
-    room->mistakes = 0;
+    room->mistakes = 10;
     room->pin = pin;
     room->playersIn = 0;
+    room->creatorFD = fd;
+    room->STARTED = false;
     strncpy(room->name, roomName, MAX_ROOM_NAME);
     strncpy(room->creator, nick, MAX_NICK_LENGTH);
-    strncpy(room->secretWord, secretWord, len);
+    strncpy(room->secretWord, secretWord, MAX_SECRET_WORD);
     pthread_mutex_init(&(room->mutex),NULL);
 
     rooms->rooms[rooms->roomsCount] = *room;
@@ -148,7 +146,7 @@ void initRooms(struct ROOMS *rooms){
     rooms->roomsCount = 0;
 }
 
-int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName, int pin){
+int joinRoom(int fd, struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName, int pin){
     pthread_mutex_lock(&(rooms->mutex));
     pthread_mutex_lock(&(users->mutex));
     struct USER *user =malloc(sizeof(struct USER));
@@ -173,6 +171,10 @@ int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomNa
             pthread_mutex_unlock(&(users->mutex));
             pthread_mutex_unlock(&(rooms->mutex));
             return 1;
+        }else if(strcmp(rooms->rooms[i].name, roomName) == 0 && rooms->rooms[i].STARTED){
+            pthread_mutex_unlock(&(users->mutex));
+            pthread_mutex_unlock(&(rooms->mutex));
+            return 3;
         }
     }
 
@@ -184,6 +186,7 @@ int joinRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomNa
 
             strncpy(rooms->rooms[i].players[rooms->rooms[i].playersIn], nick, MAX_NICK_LENGTH);
             rooms->rooms[i].playersIn++;
+            rooms->rooms[i].creatorFD = fd;
             if(rooms->rooms[i].playersIn == 2)
                 rooms->rooms[i].mistakes = 10;
             else if(rooms->rooms[i].playersIn == 3)
@@ -220,8 +223,8 @@ bool leaveRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *room
     for (int i = 0; i < rooms->roomsCount; i++){
         if(strcmp(rooms->rooms[i].name, roomName) == 0){
             for(int j = 0; j < rooms->rooms[i].playersIn; j++){
-                if(strcmp((*player).nick, rooms->rooms[i].players[j]) == 0){
-                    (*player).inRoom = 0;
+                if(strcmp(player->nick, rooms->rooms[i].players[j]) == 0){
+                    player->inRoom = 0;
                     //Sending last player to a kicked player position and decrementing a counter
                     strncpy(rooms->rooms[i].players[j], rooms->rooms[i].players[rooms->rooms[i].playersIn-1], MAX_NICK_LENGTH);
                     rooms->rooms[i].playersIn--;
@@ -241,11 +244,12 @@ bool leaveRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *room
 bool deleteRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roomName){
     pthread_mutex_lock(&(rooms->mutex));
     pthread_mutex_lock(&(users->mutex));
-
+    struct USER *player = malloc(sizeof(struct USER));
     //find player and check if he is creator
     for(int i = 0; i < users->registeredUsersCount; i++){
-        if(strcmp(users->players[i].nick, nick)==0 && users->players[i].inRoom == 1)    
-            break;
+        if(strcmp(users->players[i].nick, nick)==0 && users->players[i].inRoom == 1){
+            player = &users->players[i];   
+            break;}
         if(i == users->registeredUsersCount-1){    
             pthread_mutex_unlock(&(users->mutex));
             pthread_mutex_unlock(&(rooms->mutex));
@@ -262,6 +266,7 @@ bool deleteRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roo
                     }
                 }
             }
+            player->inRoom=0;
             struct ROOM *tmp = malloc(sizeof(struct ROOM));
             tmp = &rooms->rooms[rooms->roomsCount-1];
             rooms->rooms[i] = *tmp;
@@ -272,7 +277,7 @@ bool deleteRoom(struct ROOMS *rooms, struct USERS * users, char *nick, char *roo
     }
     pthread_mutex_unlock(&(users->mutex));
     pthread_mutex_unlock(&(rooms->mutex));
-    return false;
+    return true;
 }
 
 char **returnPlayers(struct USERS *users){
@@ -323,13 +328,12 @@ int pointsForLetter(char *SecretWord, char *InsertedLetters, char letter){
 }
 
 char *returnSecretWord(char *SecretWord, char *InsertedLetters){
-    int len = sizeof(&SecretWord)/sizeof(SecretWord[0]);
     int len_letters = sizeof(&InsertedLetters)/sizeof(InsertedLetters[0]);
-    char *result = malloc(sizeof(char)*len);
-    for (int i = 0; i<len;i++){
+    char *result= malloc(sizeof(char)*MAX_SECRET_WORD);
+    for (int i = 0; i<MAX_SECRET_WORD;i++){
         if(SecretWord[i] == ' '){
             result[i] = '-';
-        }
+        }else if(SecretWord[i]=='\n') break;
         else
             for(int j = 0; j < len_letters; j++){
                 if(InsertedLetters[j] == SecretWord[i]){
@@ -340,6 +344,7 @@ char *returnSecretWord(char *SecretWord, char *InsertedLetters){
                     result[i] = '_';
             }
     }
+
     return result;
 }
 

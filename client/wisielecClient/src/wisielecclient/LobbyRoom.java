@@ -26,7 +26,7 @@ public class LobbyRoom extends javax.swing.JFrame {
     
     private int playersCount = 0;
     private String creatorName;
-    private String[] playersList = {};
+    private String[] playersList = {""};
     
     
     /**
@@ -38,11 +38,26 @@ public class LobbyRoom extends javax.swing.JFrame {
         this.name = name;
         this.pin = pin;
         initComponents();
-        if(creator){
-            this.jButton2.setText("Kick player");
-        }
+        updatePlayersList();
     }
-
+    public boolean leaveRoom() throws IOException{
+        InputStream input = this.socket.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        OutputStream output = this.socket.getOutputStream();  
+        PrintWriter writer = new PrintWriter(output, true);
+        String message;
+        if(this.creator){
+            writer.println(requests.DELETE_ROOM);
+        }
+        else{
+            writer.println(requests.LEAVE_ROOM);
+        }
+        message = reader.readLine();
+        System.out.println(message);
+        if(message.equals(requests.ROOM_LEAVED))
+            return true;
+        return false;
+    }
     public void updatePlayersList() throws IOException{
         int playersCount = 0;
         InputStream input = this.socket.getInputStream();
@@ -52,6 +67,16 @@ public class LobbyRoom extends javax.swing.JFrame {
         String message;
         
         writer.println(requests.PLAYERS_IN_ROOM);
+        
+        message = reader.readLine();
+        this.jLabel3.setText("Creator: "+message);
+        
+        message = reader.readLine();
+        this.jLabel7.setText("Mistakes: "+message);
+        
+        message = reader.readLine();
+        this.jLabel6.setText(message);
+        
         message = reader.readLine();
         System.out.println(message);
         playersCount = Integer.parseInt(message);
@@ -114,6 +139,11 @@ public class LobbyRoom extends javax.swing.JFrame {
 
         jButton2.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
         jButton2.setText("Leave room");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jLabel6.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
         jLabel6.setText("SECRED WORD");
@@ -138,17 +168,17 @@ public class LobbyRoom extends javax.swing.JFrame {
                         .addGap(38, 38, 38)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 279, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jLabel4))))
+                                .addComponent(jLabel4))
+                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel5)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
@@ -169,7 +199,6 @@ public class LobbyRoom extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(2, 2, 2)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -177,10 +206,10 @@ public class LobbyRoom extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel5))
-                        .addGap(0, 14, Short.MAX_VALUE))
+                        .addGap(0, 26, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel6)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -201,6 +230,19 @@ public class LobbyRoom extends javax.swing.JFrame {
             Logger.getLogger(LobbyRoom.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        try {
+            if(leaveRoom()){
+                this.setVisible(false);
+                
+            }
+            
+        } catch (IOException ex) {
+            Logger.getLogger(LobbyRoom.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_jButton2ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

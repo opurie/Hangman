@@ -23,18 +23,25 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#define MAXFDS 16 * 1024
+
+
+
 void *worker(void *input);
 
 bool loginToServer(int connfd, struct USERS *users, char *nick);
 
 bool leaveServer(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick);
 
-bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick);
+bool lobbyCreateRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName);
 
-bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick);
+bool lobbyJoinRoom(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName);
 
-//for creator
-bool HandleRoom(int connfd, struct USERS *users, struct ROOMS *rooms);
+bool leaveRoomServer(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName);
+
+bool deleteRoomServer(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName);
+
+bool startGame(int connfd, struct USERS *users, struct ROOMS *rooms, char *nick, char *roomName);
 
 bool getInRoom(int connfd, struct USERS *users, struct ROOMS *rooms);
 

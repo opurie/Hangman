@@ -31,10 +31,13 @@ public class Requests {
     public String WRONG_PIN = "Wrong pin";
     public String ROOM_IS_FULL  ="Room is full";
     public String ROOM_NOT_EXISTS = "Room not exists";
+    public String ROOM_LEAVED = "Room leaved";
+    public String ROOM_NOT_LEAVED = "Room not leaved";
 
     public String USER_NOT_FOUND = "User not found";
     public String ROOM_NOT_FOUND = "Room not found";
 
+    public String GAME_STARTING = "Game starting";
     public String TIMER = "Timer";
     public String WINNER_INFO = "The winner is";
     public String WHO_GOT_POINT = "Point to";

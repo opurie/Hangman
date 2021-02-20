@@ -29,7 +29,7 @@ public class Lobby extends javax.swing.JFrame {
     private Socket socket;
     private Requests requests = new Requests();
     
-    private String[] roomList={""};
+    
     
     private LobbyRoom lobbyRoom = null;
     /**
@@ -60,7 +60,7 @@ public class Lobby extends javax.swing.JFrame {
         OutputStream output = this.socket.getOutputStream();  
         PrintWriter writer = new PrintWriter(output, true);
         String message;
-        
+        String[] roomList={""};
         writer.println(requests.GET_ROOM_LIST);
         message = reader.readLine();
         roomCount = Integer.parseInt(message);
@@ -421,7 +421,7 @@ public class Lobby extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if(this.lobbyRoom == null){
+
             try {
                 if(Join()){
                     this.lobbyRoom = new LobbyRoom(this.socket, false, this.roomName, this.pin);
@@ -430,7 +430,7 @@ public class Lobby extends javax.swing.JFrame {
             } catch (IOException ex) {
                 Logger.getLogger(Lobby.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
+        
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
@@ -454,7 +454,7 @@ public class Lobby extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        if(this.lobbyRoom == null){
+
             try {
                 if(Create()){
                     this.lobbyRoom = new LobbyRoom(this.socket, true, this.roomName, this.pin);
@@ -464,7 +464,7 @@ public class Lobby extends javax.swing.JFrame {
             } catch (IOException ex) {
                 Logger.getLogger(Lobby.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
+        
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
